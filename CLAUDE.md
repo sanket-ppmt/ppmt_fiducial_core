@@ -1,6 +1,6 @@
 # ppmt_fiducial_core
 
-ROS-independent C++ library for fast AprilTag/ArUco fiducial detection with switchable backends.
+ROS-independent C++ library for fast AprilTag/ArUco fiducial detection with switchable algorithms.
 It will replace the detection step of `peppermint_os/fiducial_detection/apriltag_ros2` (today: the
 AprilTag C library) for Peppermint's material-handling robots. A thin ROS node is added later.
 
@@ -12,21 +12,43 @@ AprilTag C library) for Peppermint's material-handling robots. A thin ROS node i
   `TEMPORARY` in the file and the CMake line, and removed later.
 - No `#ifdef`s scattered around. Platform/OpenCV-version differences live in one place each.
 - Work on branch `feature/nano_aruco`.
+- Code style: file names `snake_case.hpp/.cpp`; classes/structs `CamelCase`; functions
+  `camelCase`; variables and public struct fields `snake_case`; private members end in `_`.
+  No abbreviations or prefixes in names (`FiducialDetectorInterface`, not `IMarkerDetector`;
+  `FiducialDetectionResult`, not `Result`). Clean, specific names, no slop.
+  Always `FiducialDetector...`, never bare `Detector`; "algorithm", never "backend".
+  Config-typed fields end in `_config` (`preprocess_config`, `algorithm_config`, ...).
+- Comments: short, point-wise, precise. No paragraphs.
+- All library headers live in `include/ppmt_fiducial_core/`; `src/` holds only `.cpp` files.
+- Configs (incl. their enums) live in `include/ppmt_fiducial_core/configs/`; all other
+  types/structs/enums (detections, results) in `include/ppmt_fiducial_core/data_types/`.
 - Build: `make build` / `make test` (also regenerates data) / `make synthetic_markers` / `make oracle`.
 
 ## Design decisions
 
 - **Core library**: C++17 + OpenCV (core, later imgproc/calib3d). No ROS, no YAML, no file I/O.
-- **Configuration**: plain structs (`DetectorConfig` with sub-structs per backend) with
-  `validate()`. The ROS node fills them from ROS params (Peppermint reads robot_params YAML in
+- **Configuration**: plain structs, one file each in `configs/`. `FiducialDetectorConfig` holds the
+  shared configs plus `algorithm_config`, a `std::variant` of per-algorithm configs (the held
+  type is the choice of algorithm), with `validate()`. The ROS node fills them from ROS params (Peppermint reads robot_params YAML in
   the launch file and passes params; nodes never open config YAML). Tools/tests build structs in code.
-- **Factory + interface**: `createDetector(const DetectorConfig&) -> std::unique_ptr<IMarkerDetector>`,
-  plain enum switch. Backends: Nano (first), OpenCV ArUco (later).
-- **Narrow backend interface**: a backend only finds tags (id, 4 corners, quality) in a grayscale
+- **Two levels**: `FiducialPipeline` (concrete; what the ROS node uses) runs the stages and owns
+  one algorithm. `createFiducialDetector(const FiducialDetectorConfig&) -> std::unique_ptr<FiducialDetectorInterface>`
+  builds only the algorithm, `std::visit` over `algorithm_config`. Algorithms: `ArucoNano` (first), `AprilTagLibrary`
+  (later; the AprilTag C library the current node uses). No OpenCV ArUco algorithm.
+- **Errors**: `validate()` returns the problems as text (empty = valid). The factory and the
+  pipeline constructor throw on invalid config, with messages naming the field, its value and
+  the allowed range. Per-frame `detect()` never throws; frame problems go into the result.
+- **Inputs/outputs**: pipeline accepts `bgr8` or `mono8` only (anything else rejected at
+  startup); algorithm takes `CV_8UC1`. Caller-owned outputs passed by reference and reused per
+  frame. Corners are `cv::Point2f` (as aruco_nano, so Gate A compares exactly).
+- **Rejections, two levels**: counts per `RejectionReason` always; the list of rejected
+  candidates with corners only behind a debug flag (it allocates).
+- **Quality**: provisional definition, refined later. Pose types come in step 7, not before.
+- **Narrow algorithm interface**: an algorithm only finds tags (id, 4 corners, quality) in a grayscale
   image, with an optional ROI argument (unused until tracking). Preprocess, filtering, pose and
   tracking are separate shared components:
-  `image -> Preprocess -> Detector(nano|opencv) -> Filter -> Pose -> (later) Tracker -> Result`
-- **Nano backend owns its 36h11 dictionary** (embedded code table), so it needs no OpenCV aruco
+  `image -> Preprocess -> Detector(aruco_nano|apriltag_library) -> Filter -> Pose -> (later) Tracker -> FiducialDetectionResult`
+- **ArucoNano algorithm owns its 36h11 dictionary** (embedded code table), so it needs no OpenCV aruco
   module. SIMD row-skip sits behind one function with a scalar fallback; tests check they agree.
 - **Determinism**: retry jitter uses a seeded RNG owned by the detector.
 - **Performance hygiene**: detector object reuses buffers (no per-frame allocation), no static
@@ -40,8 +62,8 @@ AprilTag C library) for Peppermint's material-handling robots. A thin ROS node i
   `c99989bcab795ffa65d9e12df9de15f27677a835`): threshold image bit-identical, contours and quads
   identical, same IDs, corners within 0.001 px. The original lives only in `tools/oracle/`, never
   linked into the library. Its default dict differs; we always use `APRILTAG_36h11`.
-- **B. OpenCV backend (later)**: close to the current node: same ID set on >= 99% of frames,
-  median corner diff <= 0.5 px (the current node uses the AprilTag C library, so not identical).
+- **B. AprilTagLibrary algorithm (later)**: same library as the current node, so with identical
+  settings: same IDs and corners as the node on every frame.
 - **C. Pose**: vs current node with identical settings (CLAHE on, `iterative` PnP, zero
   distortion): translation median <= 1 cm, p95 <= 2 cm; rotation median <= 1 deg, p95 <= 3 deg;
   lateral y median <= 5 mm.
@@ -71,7 +93,7 @@ AprilTag C library) for Peppermint's material-handling robots. A thin ROS node i
 
 ## Layout
 
-- `include/ppmt_fiducial_core/`, `src/` — the library
+- `include/ppmt_fiducial_core/`, `src/` — the library; `configs/` = config structs, `data_types/` = other types
 - `tools/synth/` — synthetic scene renderer (`ppmt_fiducial_synth`) + `ppmt_fiducial_synth_generate`.
   Renders tags on red tape with true camera geometry; writes PNG + YAML ground truth
   (K, per tag: id, size, corners, rvec, tvec). Uses OpenCV aruco/imgcodecs (tools only).
@@ -80,7 +102,9 @@ AprilTag C library) for Peppermint's material-handling robots. A thin ROS node i
 - `data/sample/synthetic/` — generated scenes; `data/oracle/synthetic/` — oracle output
   (`<name>.yaml` ids + corners, `<name>.png` detected boxes drawn).
 - `tests/` — `test_skeleton` (TEMPORARY), `test_synth` (generator geometry and truth checks),
-  `test_oracle` (oracle has zero false positives, corners within 1 px of truth)
+  `test_oracle` (oracle has zero false positives, corners within 1 px of truth),
+  `test_configs` (every config loads by name, validate messages, algorithm/encoding selection);
+  `map_config_source.hpp` = test config source
 
 ## Plan
 
@@ -88,9 +112,10 @@ AprilTag C library) for Peppermint's material-handling robots. A thin ROS node i
 2. [done] Synthetic generator + 3 tests.
 3. [done] Oracle harness: IDs/corners on synthetic scenes (per-stage outputs added per Nano stage).
    All 4 scenes detected (`far_small` at 1.10 m; aruco_nano's limit there is ~1.2-1.3 m); corner order matches ours.
-4. [next] Types/interfaces: Detection, DetectorConfig + validate(), IMarkerDetector, factory, Result.
+4. [next] Types/interfaces: TagDetection, FiducialDetectorConfig + validate(), FiducialDetectorInterface,
+   factory, FiducialDetectionResult, FiducialPipeline (headers reviewed one at a time).
 5. Nano, one stage at a time (each: module + tests + oracle diff + timer): dictionary ->
    grayscale -> threshold -> contour tracer -> quads -> corner pre-refine -> bit sampling ->
    decode/retries/dedupe -> final refinement.
 6. End-to-end vs oracle and ground truth; benchmark; profiling (perf/Tracy).
-7. Pose module (shared), Gate C. 8. ROS node adapter. Later: OpenCV backend, tracking/ROI.
+7. Pose module (shared), Gate C. 8. ROS node adapter. Later: AprilTagLibrary algorithm, tracking/ROI.

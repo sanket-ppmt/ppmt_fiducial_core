@@ -17,6 +17,11 @@ find_package(OpenCV REQUIRED COMPONENTS core)
 
 add_library(ppmt_fiducial_core
   src/version.cpp
+  src/configs/config_value_reading.cpp
+  src/configs/aruco_nano_config.cpp
+  src/configs/preprocess_config.cpp
+  src/configs/tag_filter_config.cpp
+  src/configs/fiducial_detector_config.cpp
 )
 target_include_directories(ppmt_fiducial_core PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

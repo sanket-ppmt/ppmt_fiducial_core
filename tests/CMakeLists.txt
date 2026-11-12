@@ -17,3 +17,8 @@ add_executable(test_oracle test_oracle.cpp)
 target_link_libraries(test_oracle PRIVATE ${OpenCV_LIBS} GTest::gtest_main)
 target_compile_definitions(test_oracle PRIVATE PPMT_DATA_DIR="${PROJECT_SOURCE_DIR}/data")
 gtest_discover_tests(test_oracle)
+
+add_executable(test_configs test_configs.cpp)
+target_link_libraries(test_configs PRIVATE ppmt_fiducial_core GTest::gtest_main)
+target_compile_options(test_configs PRIVATE -Wall -Wextra -Wpedantic -Werror)
+gtest_discover_tests(test_configs)
