@@ -1,0 +1,21 @@
+%YAML:1.0
+---
+aruco_nano_commit: c99989bcab795ffa65d9e12df9de15f27677a835
+dictionary: APRILTAG_36h11
+params:
+   boxFilterSize: 15
+   thres: 3
+   minSize: 10
+   maxAttemptsPerCandidate: 5
+   maxTimesRevisited: 5.0000000745058060e-02
+   errorCorrectionRate: 0.
+markers:
+   -
+      id: 5
+      corners: !!opencv-matrix
+         rows: 4
+         cols: 2
+         dt: f
+         data: [ 4.08598083e+02, 7.54474640e+01, 4.44398102e+02,
+             7.53032608e+01, 4.45210419e+02, 9.35386200e+01,
+             4.07809631e+02, 9.33615112e+01 ]
