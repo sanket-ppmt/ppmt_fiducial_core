@@ -97,8 +97,6 @@ void FiducialDetectorConfig::loadFromConfigSource(ConfigSourceInterface & config
 
   preprocess_config.loadFromConfigSource(config_source, name_prefix + "preprocess_config.");
   tag_filter_config.loadFromConfigSource(config_source, name_prefix + "tag_filter_config.");
-  readConfigValue(config_source, name_prefix + "collect_rejected_candidates",
-                  collect_rejected_candidates);
 }
 
 std::string FiducialDetectorConfig::validate(const std::string & name_prefix) const

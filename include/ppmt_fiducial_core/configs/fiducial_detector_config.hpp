@@ -30,15 +30,11 @@ struct FiducialDetectorConfig
   FiducialDetectorAlgorithmConfig algorithm_config;
   TagFilterConfig tag_filter_config;
 
-  // Debug: keep every rejected candidate with its corners (allocates per frame).
-  bool collect_rejected_candidates = false;
-
   // Reads the whole config, all sub-configs included.
   // - "input_encoding": "bgr8" | "mono8".
   // - "algorithm": selects the algorithm, e.g. "aruco_nano"; its fields are read from
   //   "algorithm_config.<algorithm>.". Unknown name throws, listing the valid names.
   // - "preprocess_config.", "tag_filter_config.": their fields.
-  // - "collect_rejected_candidates".
   void loadFromConfigSource(ConfigSourceInterface & config_source,
                             const std::string & name_prefix = "");
 

@@ -13,7 +13,7 @@ endif()
 option(PPMT_FIDUCIAL_BUILD_TESTS "Build unit tests" ON)
 option(PPMT_FIDUCIAL_BUILD_TOOLS "Build developer tools (synthetic data generator)" ON)
 
-find_package(OpenCV REQUIRED COMPONENTS core)
+find_package(OpenCV REQUIRED COMPONENTS core imgproc)
 
 add_library(ppmt_fiducial_core
   src/version.cpp
@@ -22,6 +22,9 @@ add_library(ppmt_fiducial_core
   src/configs/preprocess_config.cpp
   src/configs/tag_filter_config.cpp
   src/configs/fiducial_detector_config.cpp
+  src/algorithms/aruco_nano/aruco_nano_fiducial_detector.cpp
+  src/create_fiducial_detector.cpp
+  src/fiducial_pipeline.cpp
 )
 target_include_directories(ppmt_fiducial_core PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

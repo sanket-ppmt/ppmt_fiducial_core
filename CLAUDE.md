@@ -53,8 +53,10 @@ AprilTag C library) for Peppermint's material-handling robots. A thin ROS node i
 - **Determinism**: retry jitter uses a seeded RNG owned by the detector.
 - **Performance hygiene**: detector object reuses buffers (no per-frame allocation), no static
   state, one instance per camera.
-- **Observability**: result carries per-stage timings, funnel counts (contours, quads, decoded)
-  and rejection reasons. Profiling is compiled out unless enabled. The library never writes files.
+- **Observability (deferred, added later as one clean piece)**: per-stage timings as
+  `std::chrono` durations, funnel counts (contours, quads, decoded) and rejection reasons.
+  Not in `FiducialDetectionResult` yet; it holds only `frame_status` and `detections`.
+  Profiling is compiled out unless enabled. The library never writes files.
 
 ## Acceptance gates (tolerances are starting points)
 
@@ -93,7 +95,8 @@ AprilTag C library) for Peppermint's material-handling robots. A thin ROS node i
 
 ## Layout
 
-- `include/ppmt_fiducial_core/`, `src/` — the library; `configs/` = config structs, `data_types/` = other types
+- `include/ppmt_fiducial_core/`, `src/` — the library; `configs/` = config structs, `data_types/` = other types,
+  `algorithms/<name>/` = one folder per algorithm (stages go there), mirrored in `src/`
 - `tools/synth/` — synthetic scene renderer (`ppmt_fiducial_synth`) + `ppmt_fiducial_synth_generate`.
   Renders tags on red tape with true camera geometry; writes PNG + YAML ground truth
   (K, per tag: id, size, corners, rvec, tvec). Uses OpenCV aruco/imgcodecs (tools only).
@@ -104,7 +107,8 @@ AprilTag C library) for Peppermint's material-handling robots. A thin ROS node i
 - `tests/` — `test_skeleton` (TEMPORARY), `test_synth` (generator geometry and truth checks),
   `test_oracle` (oracle has zero false positives, corners within 1 px of truth),
   `test_configs` (every config loads by name, validate messages, algorithm/encoding selection);
-  `map_config_source.hpp` = test config source
+  `map_config_source.hpp` = test config source; `test_fiducial_pipeline` (config errors,
+  frame status, preprocess paths; tag filter tested once ArucoNano detects tags)
 
 ## Plan
 
@@ -112,9 +116,9 @@ AprilTag C library) for Peppermint's material-handling robots. A thin ROS node i
 2. [done] Synthetic generator + 3 tests.
 3. [done] Oracle harness: IDs/corners on synthetic scenes (per-stage outputs added per Nano stage).
    All 4 scenes detected (`far_small` at 1.10 m; aruco_nano's limit there is ~1.2-1.3 m); corner order matches ours.
-4. [next] Types/interfaces: TagDetection, FiducialDetectorConfig + validate(), FiducialDetectorInterface,
+4. [done] Types/interfaces: TagDetection, FiducialDetectorConfig + validate(), FiducialDetectorInterface,
    factory, FiducialDetectionResult, FiducialPipeline (headers reviewed one at a time).
-5. Nano, one stage at a time (each: module + tests + oracle diff + timer): dictionary ->
+5. [next] ArucoNano, one stage at a time (each: module + tests + oracle diff + timer): dictionary ->
    grayscale -> threshold -> contour tracer -> quads -> corner pre-refine -> bit sampling ->
    decode/retries/dedupe -> final refinement.
 6. End-to-end vs oracle and ground truth; benchmark; profiling (perf/Tracy).

@@ -123,7 +123,6 @@ TEST(FiducialDetectorConfig, LoadsWholeConfigThroughPrefixes)
   config_source.set("algorithm_config.aruco_nano.threshold_offset", std::int64_t{9});
   config_source.set("preprocess_config.enable_clahe", true);
   config_source.set("tag_filter_config.allowed_ids", std::vector<std::int64_t>{5});
-  config_source.set("collect_rejected_candidates", true);
 
   FiducialDetectorConfig config;
   config.loadFromConfigSource(config_source);
@@ -133,7 +132,6 @@ TEST(FiducialDetectorConfig, LoadsWholeConfigThroughPrefixes)
   EXPECT_EQ(std::get<ArucoNanoConfig>(config.algorithm_config).threshold_offset, 9);
   EXPECT_TRUE(config.preprocess_config.enable_clahe);
   EXPECT_EQ(config.tag_filter_config.allowed_ids, (std::vector<int>{5}));
-  EXPECT_TRUE(config.collect_rejected_candidates);
   EXPECT_EQ(config.validate(), "");
 }
 

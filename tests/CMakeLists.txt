@@ -22,3 +22,8 @@ add_executable(test_configs test_configs.cpp)
 target_link_libraries(test_configs PRIVATE ppmt_fiducial_core GTest::gtest_main)
 target_compile_options(test_configs PRIVATE -Wall -Wextra -Wpedantic -Werror)
 gtest_discover_tests(test_configs)
+
+add_executable(test_fiducial_pipeline test_fiducial_pipeline.cpp)
+target_link_libraries(test_fiducial_pipeline PRIVATE ppmt_fiducial_core GTest::gtest_main)
+target_compile_options(test_fiducial_pipeline PRIVATE -Wall -Wextra -Wpedantic -Werror)
+gtest_discover_tests(test_fiducial_pipeline)
