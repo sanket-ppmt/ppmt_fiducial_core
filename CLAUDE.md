@@ -19,6 +19,8 @@ AprilTag C library) for Peppermint's material-handling robots. A thin ROS node i
   Always `FiducialDetector...`, never bare `Detector`; "algorithm", never "backend".
   Config-typed fields end in `_config` (`preprocess_config`, `algorithm_config`, ...).
 - Comments: short, point-wise, precise. No paragraphs.
+- Algorithm stages: file names without the algorithm prefix (`algorithms/aruco_nano/threshold.hpp`,
+  tests in `tests/aruco_nano/`); their functions/classes in namespace `ppmt::fiducial::aruco_nano`.
 - All library headers live in `include/ppmt_fiducial_core/`; `src/` holds only `.cpp` files.
 - Configs (incl. their enums) live in `include/ppmt_fiducial_core/configs/`; all other
   types/structs/enums (detections, results) in `include/ppmt_fiducial_core/data_types/`.
@@ -118,13 +120,14 @@ AprilTag C library) for Peppermint's material-handling robots. A thin ROS node i
 - `tools/oracle/` — original aruco_nano (pinned, unmodified, `third_party/`) + `ppmt_fiducial_oracle`;
   `compat/` is the single place handling OpenCV < 4.7 (system has 4.5.4).
 - `data/sample/synthetic/` — generated scenes; `data/oracle/synthetic/` — oracle output
-  (`<name>.yaml` ids + corners, `<name>.png` detected boxes drawn).
+  (`<name>.yaml` ids + corners, `<name>.png` detected boxes drawn; per stage: `<name>_threshold.png`).
 - `tests/` — `test_skeleton` (TEMPORARY), `test_synth` (generator geometry and truth checks),
   `test_oracle` (oracle has zero false positives, corners within 1 px of truth),
   `test_configs` (every config loads by name, validate messages, algorithm/encoding selection);
   `map_config_source.hpp` = test config source; `test_fiducial_pipeline` (config errors,
   frame status, preprocess paths; tag filter tested once ArucoNano detects tags),
-  `test_april_tag_36h11_dictionary` (our lookup == OpenCV identify: all codes x rotations, random codes)
+  `test_april_tag_36h11_dictionary` (our lookup == OpenCV identify: all codes x rotations, random codes),
+  `aruco_nano/test_threshold` (bit-identical to oracle; marks exactly the darker-than-mean pixels)
 
 ## Plan
 

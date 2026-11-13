@@ -2,6 +2,7 @@
 // oracle (reference) output: <out_dir>/<name>.yaml with the ids and the 4 corners per marker,
 // in the order aruco_nano returns them, plus <out_dir>/<name>.png with the detected boxes drawn
 // by aruco_nano's own Marker::draw (filled red square = corner 0, then green = 1, blue = 2).
+// Per-stage outputs: <name>_threshold.png (stage 2, binary image).
 // Usage: ppmt_fiducial_oracle <in_dir> <out_dir>
 #include <algorithm>
 #include <cstdio>
@@ -11,6 +12,7 @@
 
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
 
 #include "aruco_nano.h"
 
@@ -40,6 +42,23 @@ void writeOracle(const std::string & path, const aruco_nano::DetectorParameters 
     out << "}";
   }
   out << "]";
+}
+
+// Stage 2 (threshold). Inline in aruco_nano's detect(), so copied verbatim from
+// aruco_nano.h lines 330-337 (gray conversion + threshold).
+cv::Mat computeOracleThreshold(const cv::Mat & img, const aruco_nano::DetectorParameters & params)
+{
+  cv::Mat bwimage, thresImage;
+  if (img.channels() == 3)
+    cv::cvtColor(img, bwimage, cv::COLOR_BGR2GRAY);
+  else
+    bwimage = img;
+  cv::boxFilter(bwimage, thresImage, bwimage.type(),
+                cv::Size(params.boxFilterSize, params.boxFilterSize), cv::Point(-1, -1), true,
+                cv::BORDER_REPLICATE | cv::BORDER_ISOLATED);
+  thresImage = thresImage - bwimage;
+  cv::threshold(thresImage, thresImage, params.thres, 255, cv::THRESH_BINARY);
+  return thresImage;
 }
 
 }  // namespace
@@ -79,6 +98,8 @@ int main(int argc, char ** argv)
       m.draw(boxes, cv::Scalar(0, 255, 0));
     }
     cv::imwrite((out_dir / (name + ".png")).string(), boxes);
+    cv::imwrite((out_dir / (name + "_threshold.png")).string(),
+                computeOracleThreshold(img, params));
     std::printf("%s: %zu marker(s)\n", name.c_str(), markers.size());
   }
   return 0;

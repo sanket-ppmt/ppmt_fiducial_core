@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#include <opencv2/core/mat.hpp>
+
 #include "ppmt_fiducial_core/configs/aruco_nano_config.hpp"
 #include "ppmt_fiducial_core/fiducial_detector_interface.hpp"
 
@@ -20,6 +22,7 @@ public:
 
 private:
   ArucoNanoConfig config_;
+  cv::Mat binary_image_;  // stage 2 output, reused across frames
 };
 
 }  // namespace ppmt::fiducial

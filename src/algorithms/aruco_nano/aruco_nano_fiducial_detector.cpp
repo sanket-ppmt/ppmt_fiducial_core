@@ -1,5 +1,7 @@
 #include "ppmt_fiducial_core/algorithms/aruco_nano/aruco_nano_fiducial_detector.hpp"
 
+#include "ppmt_fiducial_core/algorithms/aruco_nano/threshold.hpp"
+
 namespace ppmt::fiducial
 {
 
@@ -8,11 +10,13 @@ ArucoNanoFiducialDetector::ArucoNanoFiducialDetector(const ArucoNanoConfig & con
 {
 }
 
-void ArucoNanoFiducialDetector::detect(const cv::Mat & /*gray_image*/,
+void ArucoNanoFiducialDetector::detect(const cv::Mat & gray_image,
                                        std::vector<TagDetection> & detections)
 {
   detections.clear();
-  // Stages come in step 5: threshold -> contours -> quads -> refine -> decode -> refine.
+  aruco_nano::computeThreshold(gray_image, config_.threshold_window_size,
+                               config_.threshold_offset, binary_image_);
+  // Next stages: contours -> quads -> refine -> decode -> refine.
 }
 
 }  // namespace ppmt::fiducial
