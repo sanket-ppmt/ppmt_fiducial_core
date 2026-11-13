@@ -4,6 +4,7 @@
 
 #include <opencv2/core/mat.hpp>
 
+#include "ppmt_fiducial_core/algorithms/aruco_nano/contour_tracer.hpp"
 #include "ppmt_fiducial_core/configs/aruco_nano_config.hpp"
 #include "ppmt_fiducial_core/fiducial_detector_interface.hpp"
 
@@ -22,7 +23,9 @@ public:
 
 private:
   ArucoNanoConfig config_;
-  cv::Mat binary_image_;  // stage 2 output, reused across frames
+  cv::Mat binary_image_;                        // stage 2 output, reused across frames
+  aruco_nano::ContourTracer contour_tracer_;     // stage 3
+  std::vector<std::vector<cv::Point>> contours_; // stage 3 output
 };
 
 }  // namespace ppmt::fiducial

@@ -57,8 +57,14 @@ AprilTag C library) for Peppermint's material-handling robots. A thin ROS node i
   (proposal -> header -> impl -> tests -> commit). Each stage is diffed against the oracle with the
   oracle's previous-stage output as input, so errors do not cascade. Reuse the same OpenCV calls
   the original uses (boxFilter, threshold, approxPolyDP, isContourConvex, cv::RNG).
-- **Oracle stage access**: the oracle tool reaches aruco_nano's private stage functions via
-  `#define private public` in one tools-only file; `aruco_nano.h` stays unmodified.
+- **Oracle stage access**: stage tests call the original aruco_nano's private stage functions
+  directly on the same input via `tools/oracle/oracle_stage_access.hpp` (`#define private public`
+  around the include; target `ppmt_fiducial_oracle_access`); `aruco_nano.h` stays unmodified.
+  Inline original code (threshold) is copied verbatim there. No per-stage files in `data/`.
+- **Build-time features in CMake, not `#if`**: `cmake/Feature*.cmake` picks which `.cpp`
+  implements a header. Row scan: `PPMT_FIDUCIAL_USE_SIMD` (ON) builds `row_scan_simd.cpp`
+  (OpenCV 4.5.4 intrinsics; configure fails clearly if OpenCV has no SIMD), OFF builds
+  `row_scan_scalar.cpp`. Same results; tested against `std::find_if`. No runtime/config switch.
 - **36h11 codes**: exported once from OpenCV aruco by a tool into a committed `constexpr` table;
   a test checks our lookup against OpenCV for all 587 codes x 4 rotations.
 - **Test scenes**: added to the synthetic generator as stages need them (rotation, blur,
@@ -118,22 +124,24 @@ AprilTag C library) for Peppermint's material-handling robots. A thin ROS node i
 - `tools/dictionary/` — `ppmt_fiducial_export_april_tag_36h11` (`make april_tag_36h11_codes`) writes
   the generated `algorithms/aruco_nano/april_tag_36h11_codes.hpp`.
 - `tools/oracle/` — original aruco_nano (pinned, unmodified, `third_party/`) + `ppmt_fiducial_oracle`;
-  `compat/` is the single place handling OpenCV < 4.7 (system has 4.5.4).
+  `compat/` is the single place handling OpenCV < 4.7 (system has 4.5.4);
+  `oracle_stage_access.hpp` exposes the original's stage functions to tests.
 - `data/sample/synthetic/` — generated scenes; `data/oracle/synthetic/` — oracle output
-  (`<name>.yaml` ids + corners, `<name>.png` detected boxes drawn; per stage: `<name>_threshold.png`).
+  (`<name>.yaml` ids + corners, `<name>.png` detected boxes drawn).
 - `tests/` — `test_skeleton` (TEMPORARY), `test_synth` (generator geometry and truth checks),
   `test_oracle` (oracle has zero false positives, corners within 1 px of truth),
   `test_configs` (every config loads by name, validate messages, algorithm/encoding selection);
   `map_config_source.hpp` = test config source; `test_fiducial_pipeline` (config errors,
   frame status, preprocess paths; tag filter tested once ArucoNano detects tags),
   `test_april_tag_36h11_dictionary` (our lookup == OpenCV identify: all codes x rotations, random codes),
-  `aruco_nano/test_threshold` (bit-identical to oracle; marks exactly the darker-than-mean pixels)
+  `aruco_nano/test_threshold`, `aruco_nano/test_contour_tracer`: each stage == original aruco_nano on
+  the synthetic scenes and fixed-seed noise images (tracer: contours and marked image; row scans)
 
 ## Plan
 
 1. [done] Skeleton: CMake, GTest, version().
 2. [done] Synthetic generator + 3 tests.
-3. [done] Oracle harness: IDs/corners on synthetic scenes (per-stage outputs added per Nano stage).
+3. [done] Oracle harness: IDs/corners on synthetic scenes (stages compared directly in tests).
    All 4 scenes detected (`far_small` at 1.10 m; aruco_nano's limit there is ~1.2-1.3 m); corner order matches ours.
 4. [done] Types/interfaces: TagDetection, FiducialDetectorConfig + validate(), FiducialDetectorInterface,
    factory, FiducialDetectionResult, FiducialPipeline (headers reviewed one at a time).

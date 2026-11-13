@@ -25,6 +25,7 @@ add_library(ppmt_fiducial_core
   src/algorithms/aruco_nano/aruco_nano_fiducial_detector.cpp
   src/algorithms/aruco_nano/april_tag_36h11_dictionary.cpp
   src/algorithms/aruco_nano/threshold.cpp
+  src/algorithms/aruco_nano/contour_tracer.cpp
   src/algorithms/create_fiducial_detector.cpp
   src/fiducial_pipeline.cpp
 )
@@ -33,6 +34,7 @@ target_include_directories(ppmt_fiducial_core PUBLIC
 )
 target_link_libraries(ppmt_fiducial_core PUBLIC ${OpenCV_LIBS})
 target_compile_options(ppmt_fiducial_core PRIVATE -Wall -Wextra -Wpedantic -Werror)
+include(cmake/FeatureSimdRowScan.cmake)
 
 if(PPMT_FIDUCIAL_BUILD_TOOLS)
   add_subdirectory(tools)

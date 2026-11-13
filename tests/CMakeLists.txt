@@ -36,9 +36,15 @@ target_link_libraries(test_april_tag_36h11_dictionary PRIVATE
 target_compile_options(test_april_tag_36h11_dictionary PRIVATE -Wall -Wextra -Wpedantic -Werror)
 gtest_discover_tests(test_april_tag_36h11_dictionary)
 
-# ArucoNano stages: each compared with the oracle (reads data/; `make oracle` produces it).
-add_executable(test_aruco_nano_threshold aruco_nano/test_threshold.cpp)
-target_link_libraries(test_aruco_nano_threshold PRIVATE ppmt_fiducial_core opencv_imgcodecs GTest::gtest_main)
-target_compile_definitions(test_aruco_nano_threshold PRIVATE PPMT_DATA_DIR="${PROJECT_SOURCE_DIR}/data")
-target_compile_options(test_aruco_nano_threshold PRIVATE -Wall -Wextra -Wpedantic -Werror)
-gtest_discover_tests(test_aruco_nano_threshold)
+# ArucoNano stages: each compared directly with the original aruco_nano on the same input.
+if(TARGET ppmt_fiducial_oracle_access)
+  foreach(stage threshold contour_tracer)
+    add_executable(test_aruco_nano_${stage} aruco_nano/test_${stage}.cpp)
+    target_link_libraries(test_aruco_nano_${stage} PRIVATE
+      ppmt_fiducial_core ppmt_fiducial_oracle_access GTest::gtest_main)
+    target_compile_definitions(test_aruco_nano_${stage} PRIVATE
+      PPMT_DATA_DIR="${PROJECT_SOURCE_DIR}/data")
+    target_compile_options(test_aruco_nano_${stage} PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    gtest_discover_tests(test_aruco_nano_${stage})
+  endforeach()
+endif()

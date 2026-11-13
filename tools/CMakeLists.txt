@@ -20,6 +20,14 @@ target_include_directories(ppmt_fiducial_oracle SYSTEM PRIVATE
 target_link_libraries(ppmt_fiducial_oracle PRIVATE ${OpenCV_LIBS})
 target_compile_options(ppmt_fiducial_oracle PRIVATE -Wall -Wextra -Wpedantic -Werror)
 
+# Oracle stage access for tests: the original's private stage functions, same includes.
+add_library(ppmt_fiducial_oracle_access INTERFACE)
+target_include_directories(ppmt_fiducial_oracle_access SYSTEM INTERFACE
+  ${CMAKE_CURRENT_SOURCE_DIR}/oracle
+  ${CMAKE_CURRENT_SOURCE_DIR}/oracle/compat
+  ${CMAKE_CURRENT_SOURCE_DIR}/oracle/third_party)
+target_link_libraries(ppmt_fiducial_oracle_access INTERFACE ${OpenCV_LIBS})
+
 # Exports OpenCV's DICT_APRILTAG_36h11 into the library's constexpr code table (run via make).
 add_executable(ppmt_fiducial_export_april_tag_36h11 dictionary/export_april_tag_36h11_main.cpp)
 target_link_libraries(ppmt_fiducial_export_april_tag_36h11 PRIVATE ${OpenCV_LIBS})
