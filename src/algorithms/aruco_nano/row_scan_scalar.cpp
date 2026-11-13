@@ -7,7 +7,8 @@ namespace ppmt::fiducial::aruco_nano
 int findNextNonZero(const std::uint8_t * row, int start, int end)
 {
   int index = start;
-  for (; index < end && row[index] == 0; ++index) {
+  while (index < end && row[index] == 0) {
+    ++index;
   }
   return index;
 }
@@ -15,7 +16,8 @@ int findNextNonZero(const std::uint8_t * row, int start, int end)
 int findNextZero(const std::uint8_t * row, int start, int end)
 {
   int index = start;
-  for (; index < end && row[index] != 0; ++index) {
+  while (index < end && row[index] != 0) {
+    ++index;
   }
   return index;
 }

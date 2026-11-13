@@ -2,43 +2,46 @@
 // (cmake/FeatureSimdRowScan.cmake checks that OpenCV has SIMD for the target).
 #include "ppmt_fiducial_core/algorithms/aruco_nano/row_scan.hpp"
 
+#include <algorithm>
+
 #include <opencv2/core/hal/intrin.hpp>
 
 namespace ppmt::fiducial::aruco_nano
 {
 
-namespace
-{
+// OpenCV 4.5.4 SIMD API.
+static int laneCount() { return cv::v_uint8::nlanes; }
+static cv::v_uint8 equalMask(const cv::v_uint8 & a, const cv::v_uint8 & b) { return a == b; }
+static cv::v_uint8 notEqualMask(const cv::v_uint8 & a, const cv::v_uint8 & b) { return a != b; }
 
-// OpenCV SIMD API as in 4.5.4 (ROS Humble; also 4.6 on Jazzy).
-// - Future ref: OpenCV >= 4.9 (and aruco_nano) use VTraits<>::vlanes(), v_eq, v_ne instead
-//   of nlanes, ==, != ; change these three if we ever build against it.
-int laneCount() { return cv::v_uint8::nlanes; }
-cv::v_uint8 equalMask(const cv::v_uint8 & a, const cv::v_uint8 & b) { return a == b; }
-cv::v_uint8 notEqualMask(const cv::v_uint8 & a, const cv::v_uint8 & b) { return a != b; }
-
-// Advances over full vectors until one has a lane matching `mask_of`; returns the exact index
-// of that lane, or where the full vectors end.
+// Scans [start, end) one full vector (lane_count pixels) at a time.
+// - Returns the index of the first pixel where mask_of(pixel, 0) is true.
+// - If none: returns where the full vectors end; the caller scans the remaining tail.
 template <typename MaskFunction>
-int scanVectors(const std::uint8_t * row, int index, int end, MaskFunction mask_of)
+static int scanVectors(const std::uint8_t * row, int start, int end, MaskFunction mask_of)
 {
-  const cv::v_uint8 zero = cv::vx_setzero_u8();
   const int lane_count = laneCount();
-  for (; index <= end - lane_count; index += lane_count) {
-    const cv::v_uint8 mask = mask_of(cv::vx_load(row + index), zero);
+  const int vector_count = std::max(0, (end - start) / lane_count);
+  const cv::v_uint8 zero = cv::vx_setzero_u8();  // every lane 0
+
+  for (int vector_index = 0; vector_index < vector_count; ++vector_index) {
+    const int vector_start = start + vector_index * lane_count;
+    // vx_load: lane_count pixels from row[vector_start] (no alignment needed).
+    // mask: lane = 0xFF where it matches, else 0.
+    const cv::v_uint8 mask = mask_of(cv::vx_load(row + vector_start), zero);
+    // v_check_any: any lane set? v_scan_forward: index of the first set lane.
     if (cv::v_check_any(mask)) {
-      return index + cv::v_scan_forward(mask);
+      return vector_start + cv::v_scan_forward(mask);
     }
   }
-  return index;
+  return start + vector_count * lane_count;
 }
-
-}  // namespace
 
 int findNextNonZero(const std::uint8_t * row, int start, int end)
 {
   int index = scanVectors(row, start, end, notEqualMask);
-  for (; index < end && row[index] == 0; ++index) {
+  while (index < end && row[index] == 0) {
+    ++index;
   }
   return index;
 }
@@ -46,7 +49,8 @@ int findNextNonZero(const std::uint8_t * row, int start, int end)
 int findNextZero(const std::uint8_t * row, int start, int end)
 {
   int index = scanVectors(row, start, end, equalMask);
-  for (; index < end && row[index] != 0; ++index) {
+  while (index < end && row[index] != 0) {
+    ++index;
   }
   return index;
 }
