@@ -1,8 +1,9 @@
 BUILD_DIR     := build
 SYNTH_OUT_DIR := data/sample/synthetic
 ORACLE_OUT_DIR := data/oracle/synthetic
+APRIL_TAG_36H11_CODES := include/ppmt_fiducial_core/algorithms/aruco_nano/april_tag_36h11_codes.hpp
 
-.PHONY: build test synthetic_markers oracle clean
+.PHONY: build test synthetic_markers oracle april_tag_36h11_codes clean
 
 build:
 	cmake -S . -B $(BUILD_DIR)
@@ -18,6 +19,9 @@ synthetic_markers: build
 oracle: synthetic_markers
 	mkdir -p $(ORACLE_OUT_DIR)
 	$(BUILD_DIR)/tools/ppmt_fiducial_oracle $(SYNTH_OUT_DIR) $(ORACLE_OUT_DIR)
+
+april_tag_36h11_codes: build
+	$(BUILD_DIR)/tools/ppmt_fiducial_export_april_tag_36h11 $(APRIL_TAG_36H11_CODES)
 
 clean:
 	rm -rf $(BUILD_DIR)

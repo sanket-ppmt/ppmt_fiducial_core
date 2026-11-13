@@ -27,3 +27,11 @@ add_executable(test_fiducial_pipeline test_fiducial_pipeline.cpp)
 target_link_libraries(test_fiducial_pipeline PRIVATE ppmt_fiducial_core GTest::gtest_main)
 target_compile_options(test_fiducial_pipeline PRIVATE -Wall -Wextra -Wpedantic -Werror)
 gtest_discover_tests(test_fiducial_pipeline)
+
+# Compares our 36h11 lookup with OpenCV aruco (the test links aruco; the library does not).
+find_package(OpenCV REQUIRED COMPONENTS core aruco)
+add_executable(test_april_tag_36h11_dictionary test_april_tag_36h11_dictionary.cpp)
+target_link_libraries(test_april_tag_36h11_dictionary PRIVATE
+  ppmt_fiducial_core opencv_aruco GTest::gtest_main)
+target_compile_options(test_april_tag_36h11_dictionary PRIVATE -Wall -Wextra -Wpedantic -Werror)
+gtest_discover_tests(test_april_tag_36h11_dictionary)

@@ -50,7 +50,19 @@ AprilTag C library) for Peppermint's material-handling robots. A thin ROS node i
   `image -> Preprocess -> Detector(aruco_nano|apriltag_library) -> Filter -> Pose -> (later) Tracker -> FiducialDetectionResult`
 - **ArucoNano algorithm owns its 36h11 dictionary** (embedded code table), so it needs no OpenCV aruco
   module. SIMD row-skip sits behind one function with a scalar fallback; tests check they agree.
-- **Determinism**: retry jitter uses a seeded RNG owned by the detector.
+- **ArucoNano port strategy**: faithful port first (behaviour identical, only style changes);
+  improvements only after Gate A, one measured change at a time. One stage = one review cycle
+  (proposal -> header -> impl -> tests -> commit). Each stage is diffed against the oracle with the
+  oracle's previous-stage output as input, so errors do not cascade. Reuse the same OpenCV calls
+  the original uses (boxFilter, threshold, approxPolyDP, isContourConvex, cv::RNG).
+- **Oracle stage access**: the oracle tool reaches aruco_nano's private stage functions via
+  `#define private public` in one tools-only file; `aruco_nano.h` stays unmodified.
+- **36h11 codes**: exported once from OpenCV aruco by a tool into a committed `constexpr` table;
+  a test checks our lookup against OpenCV for all 587 codes x 4 rotations.
+- **Test scenes**: added to the synthetic generator as stages need them (rotation, blur,
+  lighting, many tags, partly outside the image, empty scene).
+- **Determinism**: retry jitter uses a seeded RNG owned by the detector, called in the same order
+  as aruco_nano.
 - **Performance hygiene**: detector object reuses buffers (no per-frame allocation), no static
   state, one instance per camera.
 - **Observability (deferred, added later as one clean piece)**: per-stage timings as
@@ -101,6 +113,8 @@ AprilTag C library) for Peppermint's material-handling robots. A thin ROS node i
 - `tools/synth/` — synthetic scene renderer (`ppmt_fiducial_synth`) + `ppmt_fiducial_synth_generate`.
   Renders tags on red tape with true camera geometry; writes PNG + YAML ground truth
   (K, per tag: id, size, corners, rvec, tvec). Uses OpenCV aruco/imgcodecs (tools only).
+- `tools/dictionary/` — `ppmt_fiducial_export_april_tag_36h11` (`make april_tag_36h11_codes`) writes
+  the generated `algorithms/aruco_nano/april_tag_36h11_codes.hpp`.
 - `tools/oracle/` — original aruco_nano (pinned, unmodified, `third_party/`) + `ppmt_fiducial_oracle`;
   `compat/` is the single place handling OpenCV < 4.7 (system has 4.5.4).
 - `data/sample/synthetic/` — generated scenes; `data/oracle/synthetic/` — oracle output
@@ -109,7 +123,8 @@ AprilTag C library) for Peppermint's material-handling robots. A thin ROS node i
   `test_oracle` (oracle has zero false positives, corners within 1 px of truth),
   `test_configs` (every config loads by name, validate messages, algorithm/encoding selection);
   `map_config_source.hpp` = test config source; `test_fiducial_pipeline` (config errors,
-  frame status, preprocess paths; tag filter tested once ArucoNano detects tags)
+  frame status, preprocess paths; tag filter tested once ArucoNano detects tags),
+  `test_april_tag_36h11_dictionary` (our lookup == OpenCV identify: all codes x rotations, random codes)
 
 ## Plan
 
