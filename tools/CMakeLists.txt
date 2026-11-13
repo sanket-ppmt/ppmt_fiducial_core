@@ -32,3 +32,8 @@ target_link_libraries(ppmt_fiducial_oracle_access INTERFACE ${OpenCV_LIBS})
 add_executable(ppmt_fiducial_export_april_tag_36h11 dictionary/export_april_tag_36h11_main.cpp)
 target_link_libraries(ppmt_fiducial_export_april_tag_36h11 PRIVATE ${OpenCV_LIBS})
 target_compile_options(ppmt_fiducial_export_april_tag_36h11 PRIVATE -Wall -Wextra -Wpedantic -Werror)
+
+# Debug images: one image per ArucoNano stage per scene, from OUR stages (run via make).
+add_executable(ppmt_fiducial_debug_images debug/debug_images_main.cpp)
+target_link_libraries(ppmt_fiducial_debug_images PRIVATE ppmt_fiducial_core ${OpenCV_LIBS})
+target_compile_options(ppmt_fiducial_debug_images PRIVATE -Wall -Wextra -Wpedantic -Werror)

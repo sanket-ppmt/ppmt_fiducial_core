@@ -25,7 +25,8 @@ AprilTag C library) for Peppermint's material-handling robots. A thin ROS node i
 - All library headers live in `include/ppmt_fiducial_core/`; `src/` holds only `.cpp` files.
 - Configs (incl. their enums) live in `include/ppmt_fiducial_core/configs/`; all other
   types/structs/enums (detections, results) in `include/ppmt_fiducial_core/data_types/`.
-- Build: `make build` / `make test` (also regenerates data) / `make synthetic_markers` / `make oracle`.
+- Build: `make build` / `make test` (also regenerates data) / `make synthetic_markers` / `make oracle` /
+  `make debug_images`.
 
 ## Design decisions
 
@@ -128,6 +129,8 @@ AprilTag C library) for Peppermint's material-handling robots. A thin ROS node i
 - `tools/oracle/` — original aruco_nano (pinned, unmodified, `third_party/`) + `ppmt_fiducial_oracle`;
   `compat/` is the single place handling OpenCV < 4.7 (system has 4.5.4);
   `oracle_stage_access.hpp` exposes the original's stage functions to tests.
+- `tools/debug/` — `ppmt_fiducial_debug_images` (`make debug_images`): one image per ArucoNano stage per
+  scene from our stages, into `data/debug/synthetic/` (git-ignored). Extended as stages are added.
 - `data/sample/synthetic/` — generated scenes; `data/oracle/synthetic/` — oracle output
   (`<name>.yaml` ids + corners, `<name>.png` detected boxes drawn).
 - `tests/` — `test_skeleton` (TEMPORARY), `test_synth` (generator geometry and truth checks),

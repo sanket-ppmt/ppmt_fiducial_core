@@ -68,3 +68,6 @@ Testing/
 
 # IDE
 .idea/
+
+# Debug images (make debug_images)
+data/debug/
