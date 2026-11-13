@@ -19,7 +19,8 @@ void ArucoNanoFiducialDetector::detect(const cv::Mat & gray_image,
   // Contours shorter than 4 quad sides cannot become a quad (as aruco_nano).
   contour_tracer_.trace(binary_image_, 4 * config_.min_quad_side_px,
                         config_.max_contour_revisit_fraction, contours_);
-  // Next stages: quads -> refine -> decode -> refine.
+  quad_candidate_finder_.find(contours_, config_.min_quad_side_px, quad_candidates_);
+  // Next stages: refine -> decode -> refine.
 }
 
 }  // namespace ppmt::fiducial

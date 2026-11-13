@@ -36,4 +36,37 @@ inline cv::Mat computeOriginalThreshold(const cv::Mat & bwimage,
   return thresImage;
 }
 
+// Stage 4 (quad candidates) of the original. Inline in MarkerDetector::detect(), so the loop
+// is copied verbatim from aruco_nano.h lines 357-372. Only change: instead of refining,
+// it records each sorted (unrefined) candidate and its contour index.
+inline void findOriginalQuadCandidates(const std::vector<std::vector<cv::Point>> & contours,
+                                       const aruco_nano::DetectorParameters & params,
+                                       std::vector<aruco_nano::Marker> & unrefinedCandidates,
+                                       std::vector<int> & contourIndices)
+{
+  std::vector<cv::Point> approxCurve;
+  int minSizeSq = params.minSize * params.minSize;
+  unrefinedCandidates.clear();
+  contourIndices.clear();
+  for (unsigned int i = 0; i < contours.size(); i++)
+  {
+      // can approximate to a convex rect?
+      cv::approxPolyDP(contours[i], approxCurve, double(contours[i].size()) * 0.03, true);
+      if (approxCurve.size() != 4 || !cv::isContourConvex(approxCurve)) continue;
+      //check distance  between corners at least minSize pix
+      if(  ((approxCurve[0].x-approxCurve[1].x)*(approxCurve[0].x-approxCurve[1].x) + (approxCurve[0].y-approxCurve[1].y)*(approxCurve[0].y-approxCurve[1].y))<minSizeSq) continue;
+      if(  ((approxCurve[1].x-approxCurve[2].x)*(approxCurve[1].x-approxCurve[2].x) + (approxCurve[1].y-approxCurve[2].y)*(approxCurve[1].y-approxCurve[2].y))<minSizeSq) continue;
+      if(  ((approxCurve[2].x-approxCurve[3].x)*(approxCurve[2].x-approxCurve[3].x) + (approxCurve[2].y-approxCurve[3].y)*(approxCurve[2].y-approxCurve[3].y))<minSizeSq) continue;
+      if(  ((approxCurve[3].x-approxCurve[0].x)*(approxCurve[3].x-approxCurve[0].x) + (approxCurve[3].y-approxCurve[0].y)*(approxCurve[3].y-approxCurve[0].y))<minSizeSq) continue;
+      // // add the points
+      aruco_nano::Marker marker;marker.reserve(4);
+      for (int j = 0; j < 4; j++)
+          marker.emplace_back( cv::Point2f( approxCurve[j].x,approxCurve[j].y));
+      //sort corner in clockwise direction
+      marker=aruco_nano::MarkerDetector::sort(marker);
+      unrefinedCandidates.push_back(marker);
+      contourIndices.push_back(static_cast<int>(i));
+  }
+}
+
 }  // namespace ppmt::fiducial::oracle

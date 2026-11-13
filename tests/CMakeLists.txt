@@ -38,7 +38,7 @@ gtest_discover_tests(test_april_tag_36h11_dictionary)
 
 # ArucoNano stages: each compared directly with the original aruco_nano on the same input.
 if(TARGET ppmt_fiducial_oracle_access)
-  foreach(stage threshold contour_tracer)
+  foreach(stage threshold contour_tracer quad_candidates)
     add_executable(test_aruco_nano_${stage} aruco_nano/test_${stage}.cpp)
     target_link_libraries(test_aruco_nano_${stage} PRIVATE
       ppmt_fiducial_core ppmt_fiducial_oracle_access GTest::gtest_main)

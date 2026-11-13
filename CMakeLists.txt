@@ -26,6 +26,7 @@ add_library(ppmt_fiducial_core
   src/algorithms/aruco_nano/april_tag_36h11_dictionary.cpp
   src/algorithms/aruco_nano/threshold.cpp
   src/algorithms/aruco_nano/contour_tracer.cpp
+  src/algorithms/aruco_nano/quad_candidates.cpp
   src/algorithms/create_fiducial_detector.cpp
   src/fiducial_pipeline.cpp
 )

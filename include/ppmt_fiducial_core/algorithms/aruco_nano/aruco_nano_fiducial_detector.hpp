@@ -5,6 +5,7 @@
 #include <opencv2/core/mat.hpp>
 
 #include "ppmt_fiducial_core/algorithms/aruco_nano/contour_tracer.hpp"
+#include "ppmt_fiducial_core/algorithms/aruco_nano/quad_candidates.hpp"
 #include "ppmt_fiducial_core/configs/aruco_nano_config.hpp"
 #include "ppmt_fiducial_core/fiducial_detector_interface.hpp"
 
@@ -26,6 +27,8 @@ private:
   cv::Mat binary_image_;                        // stage 2 output, reused across frames
   aruco_nano::ContourTracer contour_tracer_;     // stage 3
   std::vector<std::vector<cv::Point>> contours_; // stage 3 output
+  aruco_nano::QuadCandidateFinder quad_candidate_finder_;      // stage 4
+  std::vector<aruco_nano::QuadCandidate> quad_candidates_;     // stage 4 output
 };
 
 }  // namespace ppmt::fiducial

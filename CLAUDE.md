@@ -12,6 +12,7 @@ AprilTag C library) for Peppermint's material-handling robots. A thin ROS node i
   `TEMPORARY` in the file and the CMake line, and removed later.
 - No `#ifdef`s scattered around. Platform/OpenCV-version differences live in one place each.
 - Work on branch `feature/nano_aruco`.
+- Commit subjects for algorithm stages: `Stage <n>: <what>` (e.g. `Stage 3: contour tracer, ...`).
 - Code style: file names `snake_case.hpp/.cpp`; classes/structs `CamelCase`; functions
   `camelCase`; variables and public struct fields `snake_case`; private members end in `_`.
   No abbreviations or prefixes in names (`FiducialDetectorInterface`, not `IMarkerDetector`;
@@ -115,7 +116,8 @@ AprilTag C library) for Peppermint's material-handling robots. A thin ROS node i
 
 ## Layout
 
-- `include/ppmt_fiducial_core/`, `src/` — the library; `configs/` = config structs, `data_types/` = other types,
+- `include/ppmt_fiducial_core/`, `src/` — the library; `configs/` = config structs, `data_types/` = other types
+  (`data_types/aruco_nano/` = types passed between ArucoNano stages, e.g. `QuadCandidate`),
   `algorithms/` = the factory (`create_fiducial_detector`) + one folder per algorithm
   (`aruco_nano/`: its detector and, in step 5, its stages), mirrored in `src/`
 - `tools/synth/` — synthetic scene renderer (`ppmt_fiducial_synth`) + `ppmt_fiducial_synth_generate`.
@@ -134,8 +136,9 @@ AprilTag C library) for Peppermint's material-handling robots. A thin ROS node i
   `map_config_source.hpp` = test config source; `test_fiducial_pipeline` (config errors,
   frame status, preprocess paths; tag filter tested once ArucoNano detects tags),
   `test_april_tag_36h11_dictionary` (our lookup == OpenCV identify: all codes x rotations, random codes),
-  `aruco_nano/test_threshold`, `aruco_nano/test_contour_tracer`: each stage == original aruco_nano on
-  the synthetic scenes and fixed-seed noise images (tracer: contours and marked image; row scans)
+  `aruco_nano/test_threshold`, `test_contour_tracer`, `test_quad_candidates`: each stage == original
+  aruco_nano on the synthetic scenes and fixed-seed noise/shape images (tracer: contours and marked
+  image; row scans; quads: corners and contour indices)
 
 ## Plan
 
