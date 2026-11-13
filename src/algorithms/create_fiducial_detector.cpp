@@ -1,4 +1,4 @@
-#include "ppmt_fiducial_core/create_fiducial_detector.hpp"
+#include "ppmt_fiducial_core/algorithms/create_fiducial_detector.hpp"
 
 #include <stdexcept>
 #include <string>

@@ -23,7 +23,7 @@ add_library(ppmt_fiducial_core
   src/configs/tag_filter_config.cpp
   src/configs/fiducial_detector_config.cpp
   src/algorithms/aruco_nano/aruco_nano_fiducial_detector.cpp
-  src/create_fiducial_detector.cpp
+  src/algorithms/create_fiducial_detector.cpp
   src/fiducial_pipeline.cpp
 )
 target_include_directories(ppmt_fiducial_core PUBLIC

@@ -96,7 +96,8 @@ AprilTag C library) for Peppermint's material-handling robots. A thin ROS node i
 ## Layout
 
 - `include/ppmt_fiducial_core/`, `src/` — the library; `configs/` = config structs, `data_types/` = other types,
-  `algorithms/<name>/` = one folder per algorithm (stages go there), mirrored in `src/`
+  `algorithms/` = the factory (`create_fiducial_detector`) + one folder per algorithm
+  (`aruco_nano/`: its detector and, in step 5, its stages), mirrored in `src/`
 - `tools/synth/` — synthetic scene renderer (`ppmt_fiducial_synth`) + `ppmt_fiducial_synth_generate`.
   Renders tags on red tape with true camera geometry; writes PNG + YAML ground truth
   (K, per tag: id, size, corners, rvec, tvec). Uses OpenCV aruco/imgcodecs (tools only).

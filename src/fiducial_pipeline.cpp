@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "ppmt_fiducial_core/create_fiducial_detector.hpp"
+#include "ppmt_fiducial_core/algorithms/create_fiducial_detector.hpp"
 
 namespace ppmt::fiducial
 {
@@ -33,7 +33,6 @@ void FiducialPipeline::detect(const cv::Mat & image, FiducialDetectionResult & r
   if (result.frame_status != FrameStatus::Ok) {
     return;
   }
-
   const cv::Mat & algorithm_input = preprocess(image);
   fiducial_detector_->detect(algorithm_input, result.detections);
   applyTagFilter(result.detections);
